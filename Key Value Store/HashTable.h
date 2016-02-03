@@ -25,25 +25,24 @@ class HashTable
         size_t tableSize;
         std::vector<Pair<D,K> >* hashArray;
     public:
-        void addElement(Pair<D,K>);
+        bool addElement(Pair<D,K>);
         bool findElementWithKey(std::string);
     private:
         std::string generateFileName(int);
         bool isThereAFileWithName(std::string);
+        bool isContaining(std::string, char*);
 };
 
 template <typename D,typename K>
-void HashTable<D,K>::addElement(Pair<D,K> item)
+bool HashTable<D,K>::addElement(Pair<D,K> item)
 {
     Hash hashFunc;
     int index = hashFunc.hashFunc(item.key);
-    std::cout << "Data : " << item.data<< " Key : " << item.key << std::endl;
-    std::cout << "The index is : " << index << std::endl;
+    //std::cout << "Data : " << item.data<< " Key : " << item.key << std::endl;
+    //std::cout << "The index is : " << index << std::endl;
 
 
     std::string nameOfFile = this->generateFileName(index);
-
-    //std::cout << nameOfFile << std::endl;
 
     int length = nameOfFile.length();
     char* finalName = new char[length + 1];
@@ -53,27 +52,37 @@ void HashTable<D,K>::addElement(Pair<D,K> item)
     }
     finalName[length] = '\0';
 
-    //std::cout << finalName << std::endl;
-
     std::ofstream fileToWrite;
-    fileToWrite.open(finalName, std::ios::binary);
+
+    if(isThereAFileWithName(finalName))
+    {
+        if(this->isContaining(item.key,finalName))
+        {
+            std::cout << "isContaining ! " << std::endl;
+            return false;
+        }
+        std::cout << "There is a file " << std::endl;
+        fileToWrite.open(finalName, std::ios::binary|std::ios::app);
+        fileToWrite << "\n";
+    }
+    else
+    {
+        fileToWrite.open(finalName, std::ios::binary);
+    }
     //data
-    int lengthOfData = item.data.length();
-    fileToWrite << lengthOfData << "\n";
-    fileToWrite.write(item.data.c_str(), item.data.length());
-    //key
-    int lengthOfKey = item.key.length();
-    fileToWrite <<"\n" << lengthOfKey << "\n";
     fileToWrite.write(item.key.c_str(), item.key.length());
+
+    fileToWrite <<"\n";
+    //key
+    fileToWrite.write(item.data.c_str(), item.data.length());
+
+    char endOfPair = '*';
+    fileToWrite <<"\n" << endOfPair;
 
     fileToWrite.close();
     delete[] finalName;
 
-    Pair<D,K> tempPair;
-
-    tempPair.data = item.data;
-    tempPair.key = item.key;
-    this->hashArray[index].push_back(tempPair);
+    return true;
 }
 
 template <typename D, typename K>
@@ -83,8 +92,6 @@ bool HashTable<D,K>::findElementWithKey(std::string itemKey)
     size_t index = hashFunc.hashFunc(itemKey);
 
     std::string nameOfFile = this->generateFileName(index);
-
-    //std::cout << nameOfFile << std::endl;
 
     int length = nameOfFile.length();
     char* finalName = new char[length + 1];
@@ -109,11 +116,25 @@ bool HashTable<D,K>::findElementWithKey(std::string itemKey)
         {
             return false;
         }
+
         std::string dataReader;
-        std::string lengthForRead;
-        std::getline(fileToRead,lengthForRead);
-        std::getline(fileToRead,dataReader);
-        std::cout << "The Data is : " << lengthForRead << "  " << dataReader << std::endl;
+        std::string keyHolder;
+
+        while(!fileToRead.eof())
+        {
+            std::getline(fileToRead,keyHolder);
+            if(keyHolder.compare(itemKey) == 0)
+            {
+                std::getline(fileToRead,dataReader);
+                std::cout << "\nThe Data Is : " << dataReader << std::endl;
+            }
+            else
+            {
+                std::string lineSkipper;
+                std::getline(fileToRead,lineSkipper);
+                std::getline(fileToRead,lineSkipper);
+            }
+        }
     }
 
     fileToRead.close();
@@ -159,5 +180,29 @@ bool HashTable<D,K>::isThereAFileWithName(std::string nameOfFile)
     }
 
     delete[]finalName;
+    return false;
+}
+
+template <typename D,typename K>
+bool HashTable<D,K>::isContaining(std::string itemKey, char* fileName)
+{
+    std::ifstream check(fileName,std::ios::binary);
+    if(check)
+    {
+        std::string keyHolder;
+        std::string linePasser;
+        while(!check.eof())
+        {
+            std::getline(check,keyHolder);
+            if(itemKey.compare(keyHolder) == 0)
+            {
+                return true;
+            }
+            std::getline(check,linePasser);
+            std::getline(check,linePasser);
+        }
+
+    }
+
     return false;
 }
