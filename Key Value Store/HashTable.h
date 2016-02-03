@@ -27,10 +27,12 @@ class HashTable
     public:
         bool addElement(Pair<D,K>);
         bool findElementWithKey(std::string);
+        bool deleteElementWithKey(std::string);
     private:
         std::string generateFileName(int);
         bool isThereAFileWithName(std::string);
         bool isContaining(std::string, char*);
+        int countOfElementsInFile(char*);
 };
 
 template <typename D,typename K>
@@ -38,9 +40,6 @@ bool HashTable<D,K>::addElement(Pair<D,K> item)
 {
     Hash hashFunc;
     int index = hashFunc.hashFunc(item.key);
-    //std::cout << "Data : " << item.data<< " Key : " << item.key << std::endl;
-    //std::cout << "The index is : " << index << std::endl;
-
 
     std::string nameOfFile = this->generateFileName(index);
 
@@ -58,17 +57,26 @@ bool HashTable<D,K>::addElement(Pair<D,K> item)
     {
         if(this->isContaining(item.key,finalName))
         {
-            std::cout << "isContaining ! " << std::endl;
+            std::cout << "That item was already stored ! " << std::endl;
             return false;
         }
-        std::cout << "There is a file " << std::endl;
+        //std::cout << "There is a file " << std::endl;
         fileToWrite.open(finalName, std::ios::binary|std::ios::app);
         fileToWrite << "\n";
     }
     else
     {
         fileToWrite.open(finalName, std::ios::binary);
+        if(!fileToWrite.is_open())
+        {
+            return false;
+        }
+
+        std::cout << "Item Stored ! " << std::endl;
+        std::cout << "Data : " << item.data<< " Key : " << item.key << std::endl;
+        std::cout << "The index is : " << index << std::endl;
     }
+
     //data
     fileToWrite.write(item.key.c_str(), item.key.length());
 
@@ -103,8 +111,6 @@ bool HashTable<D,K>::findElementWithKey(std::string itemKey)
 
     std::ifstream fileToRead;
 
-    fileToRead.open(finalName,std::ios::in|std::ios::binary);
-
     if(!isThereAFileWithName(finalName))
     {
         std::cerr << "No such an element !! " << std::endl;
@@ -112,6 +118,7 @@ bool HashTable<D,K>::findElementWithKey(std::string itemKey)
     }
     else
     {
+        fileToRead.open(finalName,std::ios::in|std::ios::binary);
         if(!fileToRead.is_open())
         {
             return false;
@@ -205,4 +212,116 @@ bool HashTable<D,K>::isContaining(std::string itemKey, char* fileName)
     }
 
     return false;
+}
+
+template <typename D, typename K>
+bool HashTable<D,K>::deleteElementWithKey(std::string itemKey)
+{
+    Hash hashFunc;
+    size_t index = hashFunc.hashFunc(itemKey);
+
+    std::string nameOfFile = this->generateFileName(index);
+
+    int length = nameOfFile.length();
+    char* finalName = new char[length + 1];
+    for(int i = 0; i < length; i++)
+    {
+        finalName[i] = nameOfFile[i];
+    }
+    finalName[length] = '\0';
+
+    std::ifstream fileToRead;
+
+    if(!isThereAFileWithName(finalName))
+    {
+        std::cerr << "The element you are trying to delete, is not in the store !! " << std::endl;
+        return false;
+    }
+
+    int countOfElements = this->countOfElementsInFile(finalName);
+
+    std::cout << "The count of elements is : " << countOfElements << std::endl;
+
+    if(countOfElements == 1)
+    {
+        std::remove(finalName);
+
+        std::cout << "Item Deleted ! " << std::endl;
+
+        return true;
+    }
+    else
+    {
+        if(!isContaining(itemKey,finalName))
+        {
+            std::cerr << "The element you are trying to delete, is not in the store !! " << std::endl;
+            return false;
+        }
+        DynamicArray<std::string> newFileDataHolder;
+
+        fileToRead.open(finalName,std::ios::in|std::ios::binary);
+        if(!fileToRead.is_open())
+        {
+            return false;
+        }
+        while(!fileToRead.eof())
+        {
+            std::string lineHolder;
+            std::getline(fileToRead,lineHolder);
+            std::string lineSkipper;
+            if(lineHolder.compare(itemKey) == 0)
+            {
+                std::getline(fileToRead,lineSkipper);
+                std::getline(fileToRead,lineSkipper);
+            }
+            else
+            {
+                std::cout << lineHolder << std::endl;
+                newFileDataHolder.addElement(lineHolder);
+            }
+        }
+        fileToRead.close();
+        std::cout << "Item is deleted !" << std::endl;
+        std::remove(finalName);
+
+        std::ofstream fileToWrite;
+        fileToWrite.open(finalName, std::ios::binary);
+        //std::cout << newFileDataHolder.getCountOfElements() << std::endl;
+        int countOfRows = newFileDataHolder.getCountOfElements();
+        for(int i = 0; i < countOfRows - 3;i++)
+        {
+            fileToWrite.write(newFileDataHolder[i].c_str(), newFileDataHolder[i].length());
+            fileToWrite << "\n";
+        }
+        fileToWrite.write(newFileDataHolder[countOfRows - 3].c_str(), newFileDataHolder[countOfRows - 3].length());
+        fileToWrite << "\n";
+        fileToWrite.write(newFileDataHolder[countOfRows - 2].c_str(), newFileDataHolder[countOfRows - 2].length());
+        fileToWrite << "\n";
+        fileToWrite.write(newFileDataHolder[countOfRows - 1].c_str(), newFileDataHolder[countOfRows - 1].length());
+
+        fileToWrite.close();
+
+        delete[] finalName;
+    }
+
+    return false;
+}
+
+template <typename D, typename K>
+int HashTable<D,K>::countOfElementsInFile(char* nameOfFile)
+{
+    int counter = 1;
+    std::ifstream counterStream(nameOfFile,std::ios::binary);
+    if(counterStream)
+    {
+        std::string linePasser;
+        while(!counterStream.eof())
+        {
+            std::getline(counterStream,linePasser);
+            counter++;
+        }
+
+    }
+
+    return counter/3;
 }
