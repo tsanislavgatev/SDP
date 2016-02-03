@@ -20,6 +20,7 @@ class Pair
         {
             this->data = d;
             this->key = k;
+            this->isDeleted = false;
         }
 
 
@@ -45,30 +46,11 @@ class Pair
             return *this;
         }
 
-/*
-        D getData() const
+        void deletePair()
         {
-            std::cout << "Get Data _" << std::endl;
-            return this->data;
+            this->isDeleted = true;
         }
 
-        K getKey() const
-        {
-            std::cout << "Get Key _" << std::endl;
-            return this->key;
-        }
-
-        void setData(D d)
-        {
-            std::cout << "Set Data _ "<< std::endl;
-            this->data = d;
-        }
-
-        void setKey(K k)
-        {
-            std::cout << "Set Key _ "<< std::endl;
-            this->key = k;
-        }
-*/
     private:
+        bool isDeleted;
 };
