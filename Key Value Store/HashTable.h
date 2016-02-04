@@ -60,7 +60,6 @@ bool HashTable<D,K>::addElement(Pair<D,K> item)
             std::cout << "That item was already stored ! " << std::endl;
             return false;
         }
-        //std::cout << "There is a file " << std::endl;
         fileToWrite.open(finalName, std::ios::binary|std::ios::app);
         fileToWrite << "\n";
     }
@@ -133,7 +132,7 @@ bool HashTable<D,K>::findElementWithKey(std::string itemKey)
             if(keyHolder.compare(itemKey) == 0)
             {
                 std::getline(fileToRead,dataReader);
-                std::cout << "\nThe Data Is : " << dataReader << std::endl;
+                std::cout << "\nThe Data in this item is : " << dataReader << std::endl;
             }
             else
             {
@@ -239,8 +238,6 @@ bool HashTable<D,K>::deleteElementWithKey(std::string itemKey)
     }
 
     int countOfElements = this->countOfElementsInFile(finalName);
-
-    std::cout << "The count of elements is : " << countOfElements << std::endl;
 
     if(countOfElements == 1)
     {
