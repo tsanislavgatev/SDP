@@ -11,7 +11,7 @@ private:
     int grade;
 
 public:
-    Student(char* name, int grade)
+    Student(const char* name, int grade)
     {
         this->name = new char[strlen(name) + 1];
         strcpy(this->name,name);
@@ -34,7 +34,7 @@ public:
         this->grade = grade;
     }
 
-    void setName(char* name)
+    void setName(const char* name)
     {
         delete[] this->name;
         this->name = new char[strlen(name) + 1];
